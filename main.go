@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"syscall"
 
 	"bazil.org/fuse"
@@ -21,13 +23,15 @@ var progName = filepath.Base(os.Args[0])
 
 func usage() {
 	fmt.Fprintf(os.Stderr, "Usage of %s:\n", progName)
-	fmt.Fprintf(os.Stderr, "  %s storagePath MOUNTPOINT\n", progName)
+	fmt.Fprintf(os.Stderr, "  %s [options] storagePath MOUNTPOINT\n", progName)
 	flag.PrintDefaults()
 }
 
 func main() {
 	log.SetFlags(0)
 	log.SetPrefix(progName + ": ")
+	blocksize := flag.String("blocksize", "", "Sets the size of a blockfile in the storage directory.")
+	size := flag.String("size", "", "Sets the size of the file created on the mounted filesystem")
 
 	flag.Usage = usage
 	flag.Parse()
@@ -36,14 +40,23 @@ func main() {
 		usage()
 		os.Exit(2)
 	}
+
+	if *blocksize == "" {
+		flag.Usage()
+		log.Fatal("--size option is required")
+	}
+	if *size == "" {
+		flag.Usage()
+		log.Fatal("--size option is required")
+	}
 	path := flag.Arg(0)
 	mountpoint := flag.Arg(1)
-	if err := mount(path, mountpoint); err != nil {
+	if err := mount(path, mountpoint, parseSize(*size), parseSize(*blocksize)); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func mount(storagePath, mountpoint string) error {
+func mount(storagePath, mountpoint string, file_size int64, block_size int64) error {
 	c, err := fuse.Mount(mountpoint)
 	if c != nil {
 		defer c.Close()
@@ -54,7 +67,7 @@ func mount(storagePath, mountpoint string) error {
 	}
 
 	filesys := &FS{
-		storage: pkg.NewStorage(storagePath, 26, 9),
+		storage: pkg.NewStorage(storagePath, uint64(file_size), uint(block_size)),
 	}
 	filesys.root = &Dir{filesys}
 	return fs.Serve(c, filesys)
@@ -103,6 +116,22 @@ func (dir Dir) Lookup(ctx context.Context, name string) (fs.Node, error) {
 		return File{storage: &dir.fs.storage}, nil
 	}
 	return nil, syscall.ENOENT
+}
+
+func parseSize(s string) int64 {
+	var unit int64 = 1
+	if strings.HasSuffix(s, "K") {
+		unit = 1024
+		s = s[:len(s)-1]
+	} else if strings.HasSuffix(s, "M") {
+		unit = 1024 * 1024
+		s = s[:len(s)-1]
+	}
+	val, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		log.Fatal("Not an int")
+	}
+	return val * unit
 }
 
 ///////// File /////////////////////////////////////////////////////////

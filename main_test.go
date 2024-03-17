@@ -15,7 +15,7 @@ type test_mount struct {
 }
 
 func (m *test_mount) Start() {
-	mount(m.storage, m.mntPoint)
+	mount(m.storage, m.mntPoint, 26, 9)
 }
 
 func (m *test_mount) Stop() {
@@ -104,7 +104,7 @@ func Test_writeFile(t *testing.T) {
 		}
 		result := string(contents[0 : len(contents)-2])
 		if result != "ZZZZZZZBBBBZZZZZZZZZZZZZ" {
-			t.Fatalf("THe file contents is wrong: %s", result)
+			t.Fatalf("The file contents is wrong: %s", result)
 		}
 		if contents[len(contents)-1] != 0 {
 			t.Fatalf("The final 0 is wrong: %s", string(contents))
@@ -113,4 +113,9 @@ func Test_writeFile(t *testing.T) {
 			t.Fatalf("The final 0 is wrong: %s", string(contents))
 		}
 	})
+}
+
+type shadow_file struct {
+	testFile *os.File
+	realFile *os.File
 }

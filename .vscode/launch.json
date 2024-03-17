@@ -8,7 +8,7 @@
             "type": "go",
             "program": "${workspaceFolder}/main.go",
             "name": "Launch main.go",
-            "args": ["store", "mnt"],
+            "args": ["--blocksize=1M", "--size=100M", "store", "mnt"],
             "cwd": "${workspaceFolder}"
         }
     ]

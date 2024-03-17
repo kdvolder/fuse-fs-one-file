@@ -1,13 +1,13 @@
 Fuse FS One File
 ================
 
-Create a 'fuse' filesystem that behaves like it contains one single giant file.
+Goal: Create a 'fuse' filesystem that behaves like it contains one single giant file.
 The file is initially filled with zeros, but these zeros are not stored.
 Only parts of the file that actually are written to and contain non-0 data
-will be actually stored.
+will actually be stored.
 
-The idea is that such a file can be mounted as a loop device and formatted with
-a real filesystem such as ext4 or btrfs. 
+The idea is that such a file can be mounted as a loop device and then formatted with
+a real filesystem such as ext4 or btrfs.
 
 We want to ultimately store the data for this giant file onto a cloud-storage system,
 in particular 'box'. The problem with using box on its own or via rclone, is that
@@ -40,3 +40,7 @@ Stage 2: create an abstraction that allows the implementation of different 'stor
 
 - ....
 
+Status
+======
+
+This is a 'work in progress' and more of a toy project I fiddle with on my spare time. 
